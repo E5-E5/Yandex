@@ -1,61 +1,79 @@
+import os
 import pygame
 
 
-class Ball(pygame.sprite.Sprite):
+def load_image(name, color_key=None):
+    fullname = os.path.join('data', name)
+    try:
+        image = pygame.image.load(fullname)
+    except pygame.error as message:
+        print('Cannot load image:', name)
+        raise SystemExit(message)
+
+    if color_key is not None:
+        if color_key == -1:
+            color_key = pygame.Color('black')
+        image.set_colorkey(color_key)
+    else:
+        image = image.convert_alpha()
+    return image
+
+
+class Mountain(pygame.sprite.Sprite):
+    image = load_image("C:/Users/USER/Desktop/piton/RABOTI/12.png", -1)
+
+    def __init__(self):
+        super().__init__(all_sprites)
+        self.image = Mountain.image
+        self.rect = self.image.get_rect()
+        # вычисляем маску для эффективного сравнения
+        self.mask = pygame.mask.from_surface(self.image)
+        # располагаем горы внизу
+        self.rect.bottom = height
+
+
+class Landing(pygame.sprite.Sprite):
+    image = load_image("C:/Users/USER/Desktop/piton/RABOTI/pt.png", -1)
+
     def __init__(self, x, y):
         super().__init__(all_sprites)
-        self.image = pygame.Surface((1, 1),
-                                    pygame.SRCALPHA, 32)
-        self.rect = pygame.Rect(x, y, 1, 1)
+        self.image = Landing.image
+        self.rect = self.image.get_rect()
+        # вычисляем маску для эффективного сравнения
+        self.mask = pygame.mask.from_surface(self.image)
+        self.rect.x = x
+        self.rect.y = y
 
     def update(self):
-        if not pygame.sprite.spritecollideany(self, horizontal_borders):
-            pygame.mouse.set_pos(600, 650)
-        if not pygame.sprite.spritecollideany(self, vertical_borders):
-            pygame.mouse.set_pos(600, 650)
+        if pygame.sprite.collide_mask(self, mountain):
+            pygame.mouse.set_pos(450, 500)
 
 
-class Border(pygame.sprite.Sprite):
-    # строго вертикальный или строго горизонтальный отрезок
-    def __init__(self, x1, y1, x2, y2):
-        super().__init__(all_sprites)
-        if x1 == x2:  # вертикальная стенка
-            self.add(vertical_borders)
-            self.image = pygame.Surface([1, y2 - y1])
-            self.rect = pygame.Rect(x1, y1, 1, y2 - y1)
-        else:  # горизонтальная стенка
-            self.add(horizontal_borders)
-            self.image = pygame.Surface([x2 - x1, 1])
-            self.rect = pygame.Rect(x1, y1, x2 - x1, 1)
+pygame.init()
 
+size = width, height = 600, 600
+screen = pygame.display.set_mode(size)
 
+# группа, содержащая все спрайты
 all_sprites = pygame.sprite.Group()
 
-horizontal_borders = pygame.sprite.Group()
-vertical_borders = pygame.sprite.Group()
+mountain = Mountain()
 
-Border(2, 2, 2, 699)
-Border(2, 2, 699, 2)
-Border(699, 2, 699, 700)
-Border(500, 200, 500, 700)
-Border(200, 200, 200, 500)
-Border(1, 699, 500, 699)
-
-Ball(600, 650)
-size = width, height = 700, 700
-screen = pygame.display.set_mode(size)
-running = True
 clock = pygame.time.Clock()
-
+land = Landing(500, 500)
+running = True
+pygame.mouse.set_visible(False)
+pygame.mouse.set_pos(450, 500)
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.MOUSEMOTION:
             x1, y1 = event.pos
-            Ball(x1, y1)
-    screen.fill(pygame.Color("white"))
-    all_sprites.draw(screen)
+            land.rect.x = x1
+            land.rect.y = y1
+            screen.fill(pygame.Color("black"))
+            all_sprites.draw(screen)
     all_sprites.update()
     pygame.display.flip()
     clock.tick(50)
